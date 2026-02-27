@@ -1,7 +1,7 @@
 import React  from 'react'
 import TemperatureControls from './components/TemperatureControls';
 import TemperatureDisplay from './components/TemperatureDisplay';
-import {useState} from 'react';
+import {useState, useEffect} from 'react';
 import HistoryList from './components/HistoryList';
 
 
@@ -11,7 +11,20 @@ import HistoryList from './components/HistoryList';
 
 function App() {
   const [temperatura, setTemperatura] = useState (20)
-  const [historial, setHistorial] = useState ([])
+  const [historial, setHistorial] = useState(() => { //carga historial guardado al iniciar
+    const historialGuardado = localStorage.getItem('historial');
+    return historialGuardado ? JSON.parse(historialGuardado) : [];
+  });
+  
+  useEffect(() => { //guarda historial en localStorage cada vez que cambia
+    localStorage.setItem('historial', JSON.stringify(historial));
+  }, [historial]);
+
+  const [loading, setLoading] = useState (true)
+
+  useEffect(() => {setTimeout(() => {
+    setLoading(false);
+  }, 3000); }, []);
 
   const añadirHistorial = (nuevaTemperatura) => {
     const fecha = new Date().toLocaleTimeString();
@@ -19,18 +32,23 @@ function App() {
   }
   
     const incrementarTemperatura = () =>{
+      if (temperatura < 40) {
       const nuevaTemperatura = temperatura+1
       setTemperatura(nuevaTemperatura)
       añadirHistorial(nuevaTemperatura)
+      }
     }
     const decrementarTemperatura =()=>{
+      if (temperatura > 0) {
       const nuevaTemperatura = temperatura-1
       setTemperatura(nuevaTemperatura)
       añadirHistorial(nuevaTemperatura)
+      }
     }
    const resetearTemperatura = () => {
      setTemperatura(20)
-     añadirHistorial(20)
+     setHistorial([]) //limpia historial al resetear
+     localStorage.removeItem('historial') //elimina historial guardado al resetear
 
     }
     return(
@@ -43,7 +61,8 @@ function App() {
           resetearTemperatura = {resetearTemperatura}
         />
         <h2> Historial </h2> 
-        <HistoryList historial={historial}/>
+        {loading ? <p>Cargando historial...</p> : (
+        <HistoryList historial={historial} /> )}
 </div>
 
     )
